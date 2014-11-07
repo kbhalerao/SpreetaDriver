@@ -231,9 +231,10 @@ void loop() {
       case STATE_CALIBRATE: 
         switch(phase) {
           case PHASE_INIT:
-            Serial.println("LED intensity (0-100)?"); 
+            Serial.print("Current: ");
+            Serial.print(led_intensity, DEC); 
+            Serial.println(" LED intensity (0-100)?"); 
             phase = PHASE_RUN; 
-            led_intensity = 0;
             break;
           case PHASE_RUN:
             if(Serial.available() >0) {
