@@ -27,25 +27,30 @@ main = do
 findspr :: [FilePath] -> IO ()
 findspr [] = findspr ["/dev/"]         
 findspr [filepath] = 
-    let printfilter dir = print $ filter (isPrefixOf "tty.usb") dir
+    let printfilter dir = print $ filter (isPrefixOf "cu.") dir
     in getDirectoryContents filepath >>= printfilter
 
 -- Read a single reading from the serial port
 recursiveread :: SerialPort -> B.ByteString -> IO B.ByteString
 recursiveread s acc = do 
+    --print acc
     recd <- recv s 1000
-    if (B.length recd > 0)
+    print recd
+    if ((B.pack "Done\r\n") `B.isSuffixOf` recd)
         then recursiveread s $ B.append acc recd
         else return acc
 
 -- Read a single reading from the serial port
 getSingleRead :: FilePath -> IO [String]
 getSingleRead path = let 
-    getData = do 
+    getData s = do 
         send s $ B.pack "1"
+        --acc <- recv s 1000
+        --recv s 1000 >>= print
+        --acc <- recv s 1000
         acc <- recursiveread s B.empty
         return $ (lines . B.unpack) acc
-        in withSerial path defaultSerialSettings getData s
+    in withSerial path defaultSerialSettings getData
 
 
 -- Checks if the filepath exists, and prints a single reading
