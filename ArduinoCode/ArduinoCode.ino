@@ -246,6 +246,7 @@ void loop() {
             }
             break; 
           case PHASE_EXIT:
+            Serial.println("OK");
             state = STATE_IDLE; 
             phase = PHASE_INIT; 
             break; 
@@ -294,7 +295,7 @@ void dump_data(void) {
     double volts = (double) reading[i] / 1024.0 * 3.3; 
     Serial.println(volts, DEC);
   } 
-  Serial.println("Done");
+  Serial.println("OK");
 }
 
 void read_eeprom(void) {
