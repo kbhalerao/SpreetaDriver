@@ -77,7 +77,7 @@ getSingleRead path = do
     threadDelay 2000000 -- delay necessary to allow arduino to reboot
     send s $ B.pack "1"
     acc <- recursiveReadUntil s (B.pack "OK\r\n") B.empty 
-    --closeSerial s
+    closeSerial s
     return $ (lines . B.unpack) acc
 
 
