@@ -98,7 +98,7 @@ readspr [path] = doIfFileExists path (\x ->
 -- | Read a single frame and produce a single RIU reading
 readri :: [FilePath] -> IO ()
 readri [path] = doIfFileExists path (\x -> do
-    putStrLn "Reading"
+    -- putStrLn "Reading"
     frame <- getSingleRead x
     let readingframe = parse frame
     putStrLn $ (show (timestamp readingframe)) ++ ", " ++ (show (riu readingframe))) path
