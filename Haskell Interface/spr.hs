@@ -98,6 +98,7 @@ readspr [path] = doIfFileExists path (\x ->
 -- | Read a single frame and produce a single RIU reading
 readri :: [FilePath] -> IO ()
 readri [path] = doIfFileExists path (\x -> do
+    putStrLn "Reading"
     frame <- getSingleRead x
     let readingframe = parse frame
     putStrLn $ (show (timestamp readingframe)) ++ ", " ++ (show (riu readingframe))) path
@@ -156,8 +157,7 @@ doIfFileExists path function args = do
         False -> do
             putStrLn "No device found - looking in /dev/"
             findspr []
-        True -> do 
-            function args
+        True -> function args
         
 
 
