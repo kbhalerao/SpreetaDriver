@@ -12,6 +12,8 @@ Description :   A commandline program to be used with the Arduino firmware
                 Part of the openBioinstrumentation project
 -}
 
+module Spr where
+
 import System.Environment
 import Data.List
 import System.IO
@@ -53,7 +55,8 @@ help _ = do
         putStrLn "\tOutputs the readings in a raw format. For diagnostic purposes."
         putStrLn "\te.g. spr readraw \"/dev/cu.usbmodem1421\""
         putStrLn "\tYou probably want the 'read' function"
-        putStrLn "calibrate [FilePath] - get the average voltage across the sensor for the current calibration"
+        putStrLn "calibrate [FilePath] - get the average voltage across the sensor for "
+        putStrLn "\tthe current calibration"
         putStrLn "calibrate [FilePath, value] - set a new calibration level. (value in (0,100))"
         putStrLn "\te.g. spr calibrate \"/dev/cu.usbmodem1421\" 50"
         putStrLn "read [FilePath] - provides a single reading in a 'Timestamp, RIU' format"
@@ -74,7 +77,7 @@ findspr [filepath] =
 -- | Read a single reading from the serial port until terminator is seen      
 recursiveReadUntil :: SerialPort -> B.ByteString -> B.ByteString -> IO B.ByteString
 recursiveReadUntil s terminator acc = do
-    recd <- recv s 10
+    recd <- recv s 100
     if (terminator `B.isSuffixOf` acc)
         then return acc 
         else recursiveReadUntil s terminator $ B.append acc recd
@@ -90,7 +93,7 @@ getSingleRead path = do
     closeSerial s
     return $ (lines . B.unpack) acc
 
--- | Checks if the filepath exists, and prints a single reading
+-- | Prints a single reading in its raw state
 readspr :: [FilePath] -> IO ()
 readspr [path] = doIfFileExists path (\x -> 
     getSingleRead x >>= (mapM_ putStrLn)) path
