@@ -91,6 +91,7 @@ getSingleRead path = do
     -- putStrLn "Opening " ++ path
     s <- openSerial path defaultSerialSettings 
     threadDelay 2000000 -- delay necessary to allow arduino to reboot
+    flush s
     send s $ B.pack "1"
     acc <- recursiveReadUntil s (B.pack "OK\r\n") B.empty 
     closeSerial s
@@ -128,6 +129,7 @@ calibrate (path:val:[]) = doIfFileExists path (\[x,y] -> do
     putStrLn $ "Opening " ++ x
     s <- openSerial x defaultSerialSettings { timeout = 10 }
     threadDelay 2000000
+    flush s
     send s $ B.pack "3"
     acc <- recursiveReadUntil s (B.pack "?\r\n") B.empty 
     putStrLn "Back"
@@ -148,6 +150,7 @@ stream (path:"0":[]) = do
 stream (path:times:[]) = doIfFileExists path (\[x,y] -> do
 	s <- openSerial x defaultSerialSettings { timeout = 10 }
 	threadDelay 2000000
+	flush s
 	putStrLn "Timestamp, RIU"
 	send s $ B.pack "5"
 	streamhelper s (read y::Int)
