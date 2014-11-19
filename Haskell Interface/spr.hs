@@ -7,12 +7,14 @@ Version     :   Initial draft
 Revisions   :   Nov 9 - Everything works - barebones structure
 				Nov 17 - everything compiles - added stream function
 					   - made more refinements to code to increase abstraction
+				Nov 18 - fixed a bug in recursive read - appending the recd buffer
+				         before checking for terminator character. 
 Description :   A commandline program to be used with the Arduino firmware
                 for Spreeta Model TSPR170100
                 Part of the openBioinstrumentation project
 -}
 
-module Spr where
+--module Spr where
 
 import System.Environment
 import Data.List
@@ -77,10 +79,11 @@ findspr [filepath] =
 -- | Read a single reading from the serial port until terminator is seen      
 recursiveReadUntil :: SerialPort -> B.ByteString -> B.ByteString -> IO B.ByteString
 recursiveReadUntil s terminator acc = do
-    recd <- recv s 100
-    if (terminator `B.isSuffixOf` acc)
-        then return acc 
-        else recursiveReadUntil s terminator $ B.append acc recd
+    recd <- recv s 1000
+    let newacc = B.append acc recd
+    if (terminator `B.isSuffixOf` newacc)
+        then return newacc 
+        else recursiveReadUntil s terminator newacc
 
 -- | Read a single reading from the serial port
 getSingleRead :: FilePath -> IO [String]
@@ -95,11 +98,19 @@ getSingleRead path = do
 
 -- | Prints a single reading in its raw state
 readspr :: [FilePath] -> IO ()
-readspr [path] = doIfFileExists path (\x -> 
-    getSingleRead x >>= (mapM_ putStrLn)) path
+readspr [path] = doIfFileExists path (\x -> do
+    frame <- getSingleRead x
+    let readingframe = parse frame
+    putStrLn $ "Time: " ++ show (timestamp readingframe)
+    putStrLn $ "RIU: " ++ show (riu readingframe)
+    putStrLn $ "Average voltage: " ++ show (avg readingframe)
+    mapM_ (\(x,y) -> putStrLn ((show x) ++ ":" ++ show (y))) $ values readingframe
+    ) path
+
 
 -- | Read a single frame and produce a single RIU reading
 readri :: [FilePath] -> IO ()
+readri [] = putStrLn "What device?"
 readri [path] = doIfFileExists path (\x -> do
     -- putStrLn "Reading"
     frame <- getSingleRead x
@@ -119,6 +130,7 @@ calibrate (path:val:[]) = doIfFileExists path (\[x,y] -> do
     threadDelay 2000000
     send s $ B.pack "3"
     acc <- recursiveReadUntil s (B.pack "?\r\n") B.empty 
+    putStrLn "Back"
     putStrLn $ (B.unpack acc) ++ "%"
     putStrLn $ "Setting new value to " ++ (show y) ++ "%"
     send s $ B.pack y
@@ -149,8 +161,6 @@ streamhelper s times = do
 	let frame = parse $ (lines . B.unpack) acc
 	putStrLn $ (show (timestamp frame)) ++ ", " ++ (show (riu frame))
 	streamhelper s (times-1)
-	
-
 
 -- | doIfFileExists function
 doIfFileExists :: FilePath -> ([a] -> IO ()) -> [a] -> IO ()
